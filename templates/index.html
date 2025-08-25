@@ -54,76 +54,59 @@
         input[type="submit"]:hover {
             background-color: #0077a3;
         }
+        .flash-message {
+            background: #d9fdd3;
+            border-left: 4px solid #4CAF50;
+            padding: 12px;
+            margin-bottom: 15px;
+            font-size: 16px;
+            border-radius: 8px;
+        }
         pre {
             background: #eee;
             padding: 15px;
             border-radius: 12px;
-            max-height: 200px;
+            max-height: 500px;
             overflow-y: auto;
             font-size: 16px;
             white-space: pre-wrap;
-        }
-        h3 {
-            margin-top: 20px;
-            color: #444;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-        table, th, td {
-            border: 1px solid #ccc;
-        }
-        th, td {
-            padding: 8px;
-            text-align: left;
-        }
-        th {
-            background-color: #f0f0f0;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>Instagram Scheduler</h2>
+
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for msg in messages %}
+            <div class="flash-message">{{ msg }}</div>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <!-- URL form -->
         <form method="post">
             Instagram Post URL:<br>
             <input type="text" name="url" placeholder="Paste the Instagram URL here"><br>
             <input type="submit" value="Submit">
         </form>
 
-        <pre>{{ log }}</pre>
+        <!-- Scheduler log -->
+        <h3>Scheduler Log</h3>
+        <pre id="log-container">
+{% for entry in logs %}
+{{ entry }}
+{% endfor %}
+        </pre>
 
-        <h3>Pending Posts</h3>
-        <table>
-            <tr>
-                <th>Video Name</th>
-                <th>Caption</th>
-            </tr>
-            {% for post in to_post %}
-            <tr>
-                <td>{{ post.video_name }}</td>
-                <td>{{ post.caption }}</td>
-            </tr>
-            {% endfor %}
-        </table>
-
-        <h3>Posted Videos</h3>
-        <table>
-            <tr>
-                <th>Video Name</th>
-                <th>Caption</th>
-                <th>Date Posted</th>
-            </tr>
-            {% for post in posted %}
-            <tr>
-                <td>{{ post.video_name }}</td>
-                <td>{{ post.caption }}</td>
-                <td>{{ post.date }}</td>
-            </tr>
-            {% endfor %}
-        </table>
+        <script>
+            // Auto-refresh every 60 seconds
+            setInterval(() => {
+                location.reload();
+            }, 60000);
+        </script>
     </div>
 </body>
 </html>
