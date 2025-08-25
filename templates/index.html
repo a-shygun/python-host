@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Instagram Scheduler</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f5f5f5;
+            display: flex;
+            justify-content: center;    
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+        .container {
+            background: #fff;
+            padding: 30px;
+            margin-top: 50px;
+            border-radius: 16px;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+            width: 95%;
+            max-width: 600px;
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 18px;
+            margin: 12px 0 24px 0;
+            border: 1px solid #ccc;
+            border-radius: 12px;
+            box-sizing: border-box;
+            font-size: 20px;
+        }
+        input[type="submit"] {
+            width: 100%;
+            padding: 18px;
+            margin: 5px 0;
+            border: none;
+            border-radius: 12px;
+            background-color: #0099cc;
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        input[type="submit"]:hover {
+            background-color: #0077a3;
+        }
+        pre {
+            background: #eee;
+            padding: 15px;
+            border-radius: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 16px;
+            white-space: pre-wrap;
+        }
+        h3 {
+            margin-top: 20px;
+            color: #444;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Instagram Scheduler</h2>
+        <form method="post">
+            Instagram Post URL:<br>
+            <input type="text" name="url" placeholder="Paste the Instagram URL here"><br>
+            <input type="submit" value="Submit">
+        </form>
+
+        <pre>{{ log }}</pre>
+
+        <h3>Pending Posts</h3>
+        <table>
+            <tr>
+                <th>Video Name</th>
+                <th>Caption</th>
+            </tr>
+            {% for post in to_post %}
+            <tr>
+                <td>{{ post.video_name }}</td>
+                <td>{{ post.caption }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+
+        <h3>Posted Videos</h3>
+        <table>
+            <tr>
+                <th>Video Name</th>
+                <th>Caption</th>
+                <th>Date Posted</th>
+            </tr>
+            {% for post in posted %}
+            <tr>
+                <td>{{ post.video_name }}</td>
+                <td>{{ post.caption }}</td>
+                <td>{{ post.date }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</body>
+</html>

@@ -1,2 +1,6 @@
 venv/
-downloads
+secure/
+__pycache__/
+*.pyc
+instaposter/to_upload/*
+instaposter/uploaded/*
