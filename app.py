@@ -1,4 +1,6 @@
 from flask import Flask, render_template, request
+from flask import redirect, url_for, flash, get_flashed_messages
+
 import os
 import yt_dlp
 from instagrapi import Client
@@ -16,21 +18,17 @@ INSTAGRAM_PASSWORD = os.getenv("INSTAGRAM_PASSWORD")
 SECRET_KEY = os.getenv("SECRET_KEY")
 OLLAMA_MODEL = "llama3.2:latest"
 
-# ---------------- CONFIG ----------------
 TO_UPLOAD_DIR = "instaposter/to_upload"
 UPLOADED_DIR = "instaposter/uploaded"
 POSTS_JSON = "instaposter/posts.json"
 PROMPT_FILE = "secure/prompt.txt"
 
-# os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 os.makedirs(TO_UPLOAD_DIR, exist_ok=True)
 os.makedirs(UPLOADED_DIR, exist_ok=True)
 
-# ---------------------------------------
 
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
-# --------- HELPERS ---------
 
 def load_posts():
     with open(POSTS_JSON, "r") as f:
@@ -43,11 +41,6 @@ def save_posts(posts):
 
 
 def generate_caption(creator: str) -> str:
-    # prompt = (
-    #     "Write a short Instagram caption (5 words max) with cute or seductive vibes. "
-    #     "Include a few relevant hashtags at the end. "
-    #     "Do not write anything else, just the caption with hashtags."
-    # )
     with open(PROMPT_FILE, "r", encoding="utf-8") as f:
         prompt = f.read().strip()
 
@@ -120,21 +113,18 @@ def post_to_instagram(video_path, caption):
     cl.clip_upload(video_path, caption)
     return True
 
-# --------- AUTO POST THREAD ---------
-def auto_post_later():
-    time.sleep(5)  # Wait for Flask to start
+# def auto_post_later():
+    time.sleep(5)
     while True:
         try:
             posts = load_posts()
             pending_posts = [p for p in posts if not p["posted"]]
 
             if pending_posts:
-                # Print status about pending posts
-                next_post_time = datetime.now() + timedelta(seconds=1)  # Optional placeholder
+                next_post_time = datetime.now() + timedelta(seconds=1)
                 print(f"⏳ There are {len(pending_posts)} pending videos to post.")
                 print(f"Next one will be posted soon.")
 
-                # Pick a random pending post
                 post = random.choice(pending_posts)
                 video_path = post["video_path"]
                 caption = post["caption"]
@@ -142,19 +132,16 @@ def auto_post_later():
                 print(f"🤖 Auto-posting {post['video_name']}...")
                 post_to_instagram(video_path, caption)
 
-                # Move the video file
                 new_video_path = os.path.join(UPLOADED_DIR, os.path.basename(video_path))
                 os.rename(video_path, new_video_path)
                 post["video_path"] = new_video_path
 
-                # Move the Instagram-generated thumbnail if exists
                 thumbnail_path = video_path + ".jpg"
                 if os.path.exists(thumbnail_path):
                     new_thumb_path = os.path.join(UPLOADED_DIR, os.path.basename(thumbnail_path))
                     os.rename(thumbnail_path, new_thumb_path)
                     print(f"📷 Moved thumbnail {os.path.basename(thumbnail_path)}")
 
-                # Update JSON entry
                 post["posted"] = True
                 post["date"] = datetime.now().isoformat(timespec='seconds')
                 save_posts(posts)
@@ -167,43 +154,65 @@ def auto_post_later():
         except Exception as e:
             print(f"❌ Error in auto_post_later: {e}")
 
-        time.sleep(10800)  # Wait 3 hours
+        time.sleep(10800)
+def auto_post_later():
+    time.sleep(5)  # Wait for Flask to start
+    post_interval = 10800  # 3 hours in seconds
+    next_post_time = datetime.now() + timedelta(seconds=post_interval)
 
-# --------- FLASK ROUTE ---------
-# @app.route("/", methods=["GET", "POST"])
-# def index():
-#     log = ""
-#     if request.method == "POST":
-#         url = request.form.get("url")
-#         action = request.form.get("action")
-#         if not url:
-#             log = "❌ No URL provided"
-#         else:
-#             try:
-#                 log += "⬇️ Downloading video...\n"
-#                 video_path, creator = download_instagram_video(url)
-#                 log += f"✅ Video downloaded: {video_path}\n"
-#                 log += f"🎨 Creator ID: {creator}\n"
+    while True:
+        try:
+            posts = load_posts()
+            pending_posts = [p for p in posts if not p["posted"]]
 
-#                 if action == "Submit Later":
-#                     filename = os.path.basename(video_path)
-#                     new_path = os.path.join(TO_UPLOAD_DIR, f"{creator} - {filename}")
-#                     os.rename(video_path, new_path)
-#                     log += f"⏳ Video saved for later upload: {new_path}\n"
+            if pending_posts:
+                # Check if it's time to post
+                now = datetime.now()
+                if now >= next_post_time:
+                    post = random.choice(pending_posts)
+                    video_path = post["video_path"]
+                    caption = post["caption"]
 
-#                 elif action == "Upload Now":
-#                     log += "🤖 Generating caption...\n"
-#                     caption = generate_caption(creator)
-#                     log += f"💬 Caption: {caption}\n"
-#                     log += "📤 Posting to Instagram...\n"
-#                     post_to_instagram(video_path, caption, creator)
-#                     log += "✅ Posted successfully!\n"
+                    print(f"🤖 Auto-posting {post['video_name']}...")
+                    post_to_instagram(video_path, caption)
 
-#             except Exception as e:
-#                 log += f"❌ Error: {e}\n"
+                    # Move video file
+                    new_video_path = os.path.join(UPLOADED_DIR, os.path.basename(video_path))
+                    os.rename(video_path, new_video_path)
+                    post["video_path"] = new_video_path
 
-#     return render_template("index.html", log=log)
-from flask import redirect, url_for, flash, get_flashed_messages
+                    # Move thumbnail if exists
+                    thumbnail_path = video_path + ".jpg"
+                    if os.path.exists(thumbnail_path):
+                        new_thumb_path = os.path.join(UPLOADED_DIR, os.path.basename(thumbnail_path))
+                        os.rename(thumbnail_path, new_thumb_path)
+                        print(f"📷 Moved thumbnail {os.path.basename(thumbnail_path)}")
+
+                    post["posted"] = True
+                    post["date"] = now.isoformat(timespec='seconds')
+                    save_posts(posts)
+
+                    print(f"✅ Auto-posted {post['video_name']} at {post['date']}")
+
+                    # Set next post time
+                    next_post_time = now + timedelta(seconds=post_interval)
+
+                else:
+                    # Print status update every 60 seconds
+                    remaining = next_post_time - now
+                    print(f"⏳ Pending posts: {len(pending_posts)} | "
+                          f"Next post in {remaining.seconds // 60} minutes "
+                          f"({remaining.seconds} seconds)")
+                    time.sleep(60)
+
+            else:
+                print("⏳ No pending videos to post.")
+                time.sleep(300)  # Sleep 5 mins when no posts
+
+        except Exception as e:
+            print(f"❌ Error in auto_post_later: {e}")
+            time.sleep(60)
+
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -233,10 +242,8 @@ def index():
             except Exception as e:
                 flash(f"❌ Error: {e}")
 
-        # Redirect after POST to avoid resubmission
         return redirect(url_for("index"))
 
-    # GET request: show form and library
     posts = load_posts()
     to_post = [p for p in posts if not p.get("posted")]
     posted = [p for p in posts if p.get("posted")]
@@ -251,5 +258,5 @@ def index():
     )
 if __name__ == "__main__":
     threading.Thread(target=auto_post_later, daemon=True).start()
-    app.run(host="192.168.100.24", port=5555, debug=False)
+    app.run(port=5555, debug=False)
     
