@@ -54,14 +54,6 @@
         input[type="submit"]:hover {
             background-color: #0077a3;
         }
-        .flash-message {
-            background: #d9fdd3;
-            border-left: 4px solid #4CAF50;
-            padding: 12px;
-            margin-bottom: 15px;
-            font-size: 16px;
-            border-radius: 8px;
-        }
         pre {
             background: #eee;
             padding: 15px;
@@ -77,32 +69,21 @@
     <div class="container">
         <h2>Instagram Scheduler</h2>
 
-        <!-- Flash messages -->
-        {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            {% for msg in messages %}
-            <div class="flash-message">{{ msg }}</div>
-            {% endfor %}
-        {% endif %}
-        {% endwith %}
-
-        <!-- URL form -->
         <form method="post">
             Instagram Post URL:<br>
             <input type="text" name="url" placeholder="Paste the Instagram URL here"><br>
             <input type="submit" value="Submit">
+            <input type="submit" formaction="{{ url_for('manual_upload') }}" value="Upload Now">
         </form>
 
-        <!-- Scheduler log -->
         <h3>Scheduler Log</h3>
         <pre id="log-container">
-{% for entry in logs %}
+{% for entry in logs|reverse %}
 {{ entry }}
 {% endfor %}
         </pre>
 
         <script>
-            // Auto-refresh every 60 seconds
             setInterval(() => {
                 location.reload();
             }, 60000);
